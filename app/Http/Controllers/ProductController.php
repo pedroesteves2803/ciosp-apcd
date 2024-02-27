@@ -19,9 +19,7 @@ class ProductController extends Controller
         $products = $listProducts->execute();
         $cart = $getCartOfTheUserLogged->execute();
 
-        dd($cart);
-
-        return view('product.index', compact('products'));
+        return view('product.index', compact('products', 'cart'));
     }
 
     /**

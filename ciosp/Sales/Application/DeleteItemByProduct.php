@@ -2,16 +2,14 @@
 
 namespace Ciosp\Sales\Application;
 
-use Ciosp\Sales\Application\Dtos\AddItemToCartInputDto;
-use Ciosp\Sales\Application\Dtos\AddItemToCartOutputDto;
-use Ciosp\Sales\Domain\Entities\Cart;
-use Ciosp\Sales\Domain\Entities\CartItem;
+use Ciosp\Sales\Application\Dtos\DeleteItemByProductInputDto;
+use Ciosp\Sales\Application\Dtos\DeleteItemByProductOutputDto;
 use Ciosp\Sales\Domain\Entities\Customer;
 use Ciosp\Sales\Domain\Entities\Product;
 use Ciosp\Sales\Domain\Repositories\ICartsRepository;
 use Ciosp\Shared\Utils\Notification;
 
-final class AddItemToCart {
+final class DeleteItemByProduct {
 
     public Notification $notification;
 
@@ -24,26 +22,23 @@ final class AddItemToCart {
         $this->notification = new Notification();
     }
 
-    public function execute(AddItemToCartInputDto $input): AddItemToCartOutputDto {
-
+    public function execute(DeleteItemByProductInputDto $input): DeleteItemByProductOutputDto {
         $product = $this->resolveProductById($input->productId);
+        $customer = $this->resolveCustomerById(1);
 
-        if($product instanceof Notification){
-            return new AddItemToCartOutputDto(
+        if($product instanceof Notification or $customer instanceof Notification){
+            return new DeleteItemByProductOutputDto(
                 null,
                 $this->notification
             );
         }
 
-        $cartItem = $this->hydrateCartItem($product);
+        $cart = $this->retrieveOrCreateActiveCart->execute($customer);
+        $cart->deleteItemByProduct($product);
 
-        $cart = $this->addItemToCartInMemory($cartItem);
+        $this->cartsRepository->deleteCartItemByProduct($product, $cart);
 
-        $this->cartsRepository->saveCartItems(
-            $cart
-        );
-
-        return new AddItemToCartOutputDto(
+        return new DeleteItemByProductOutputDto(
             $product,
             $this->notification
         );
@@ -62,35 +57,16 @@ final class AddItemToCart {
         return $product;
     }
 
-    private function resolveCustomerById(int $userId) : Customer | Notification {
-        $customer = $this->getCustomerById->execute($userId);
+    private function resolveCustomerById(int $customerId): Customer | Notification {
+        $customer = $this->getCustomerById->execute($customerId);
 
         if(is_null($customer)){
             return $this->notification->addError([
                 'context' => 'customer_not_found',
-                'message' => 'Cliente não encontrado!',
+                'message' => 'Customer não encontrado!',
             ]);
         }
 
         return $customer;
-    }
-
-    private function hydrateCartItem(Product $product): CartItem{
-
-        return new CartItem(
-            null,
-            $product,
-            1
-        );
-    }
-
-    private function addItemToCartInMemory(CartItem $cartItem): Cart {
-
-        $user = $this->resolveCustomerById(1);
-
-        $cart = $this->retrieveOrCreateActiveCart->execute($user);
-        $cart->addItem($cartItem);
-
-        return $cart;
     }
 }

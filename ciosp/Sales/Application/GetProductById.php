@@ -15,7 +15,7 @@ final class GetProductById {
     ){}
 
 
-    public function execute(int $productId): Product{
+    public function execute(int $productId): ?Product{
         return $this->iProductsRepository->getById($productId);
     }
 }

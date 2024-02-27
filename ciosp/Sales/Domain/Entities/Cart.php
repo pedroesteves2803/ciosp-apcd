@@ -32,4 +32,10 @@ final class Cart extends Entity implements IAggregateRoot{
     public function items(): Collection{
         return $this->items;
     }
+
+    public function deleteItemByProduct(Product $product): void{
+        $this->items = $this->items->filter(function (CartItem $cartItem) use ($product) {
+            return $cartItem->product->id != $product->id;
+        });
+    }
 }

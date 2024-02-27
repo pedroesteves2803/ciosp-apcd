@@ -14,18 +14,34 @@ final class EloquentCartsRepository implements ICartsRepository{
 
     public function retrieveOrCreateActiveCart(Customer $customer): Cart {
 
-        $cart = ModelsCart::where('user_id', $customer->id)->first();
+        $modelsCart = ModelsCart::where('user_id', $customer->id)->first();
 
-        if(is_null($cart)){
-            $cart = new ModelsCart();
-            $cart->user_id = $customer->id;
-            $cart->save();
+        if(is_null($modelsCart)){
+            $modelsCart = new ModelsCart();
+            $modelsCart->user_id = $customer->id;
+            $modelsCart->save();
         }
 
-        return new Cart(
-            $cart->id,
+        $cart =  new Cart(
+            $modelsCart->id,
             $customer
         );
+
+        $modelCartItem = ModelsCartItem::where('cart_id', $cart->id)->get();
+
+        $modelCartItem->map(function (ModelsCartItem $modelCartItem) use ($cart){
+            $cart->addItem(new CartItem(
+                $modelCartItem->id,
+                new Product(
+                    $modelCartItem->product->id,
+                    $modelCartItem->product->name,
+                    $modelCartItem->product->price,
+                ),
+                $modelCartItem->quantity
+            ));
+        });
+
+        return $cart;
     }
 
     public function saveCartItems(Cart $cart): void {
@@ -37,6 +53,13 @@ final class EloquentCartsRepository implements ICartsRepository{
             $modelCartItem->quantity = $cartItem->quantity;
             $modelCartItem->save();
         });
+    }
+
+    public function deleteCartItemByProduct(Product $removedProduct, Cart $cart): void {
+        ModelsCartItem::where([
+            'cart_id' => $cart->id,
+            'product_id' => $removedProduct->id
+        ])->delete();
     }
 
     public function byCustomer(Customer $customer): Cart {

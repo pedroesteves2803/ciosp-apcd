@@ -20,6 +20,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', [ProductController::class, 'index'])->name('index');
 Route::get('carrinho/adicionar/{id}', [CartController::class, 'store'])->name('cart.add');
+Route::get('carrinho/remover/{id}', [CartController::class, 'delete'])->name('cart.delete');
 
 // Route::get('/pedido/adicionar/{id}', function(
 //     int $id,
